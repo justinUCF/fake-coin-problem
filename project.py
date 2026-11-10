@@ -81,6 +81,7 @@ def divide_and_conquer_phase_2(L, H):
 # phase one of the optimized algorithm
 def divide_and_conquer_phase_1(coin_pile):
     global genuine_coin
+    global weighings
     # base case, if only one coin left, it is the fake coin
     if(len(coin_pile) == 1):
         fake_coin = coin_pile
@@ -102,12 +103,28 @@ def divide_and_conquer_phase_1(coin_pile):
         # else if A > B then enter phase 2 with A being the heavy set of coins
         elif result == "left":
             if not genuine_coin:
-                genuine_coin.append(C[0])
+                if(len(coin_pile) == 4):
+                    special_case = (A[0] == B[0])
+                    weighings += 1
+                    if(special_case):
+                        genuine_coin = [A[0]]
+                    else:
+                        genuine_coin = [A[1]]
+                else:           
+                    genuine_coin.append(C[0])
             fake_coin = divide_and_conquer_phase_2(B, A)
         # else if A < B then enter phase 2 with B being the heavy set of coins
         elif result == "right":
             if not genuine_coin:
-                genuine_coin.append(C[0])
+                if(len(coin_pile) == 4):
+                    special_case = (A[0] == B[0])
+                    weighings += 1
+                    if(special_case):
+                        genuine_coin = [A[0]]
+                    else:
+                        genuine_coin = [A[1]]
+                else:           
+                    genuine_coin.append(C[0])
             fake_coin = divide_and_conquer_phase_2(A, B)
     # found the fake coin in phase 2
     return fake_coin
@@ -246,17 +263,20 @@ def scale_new(prefix, left, right):
         return "balanced"
 
 # optimized algorithm that preforms the least amount of weighings to find the fake coin.
-def divide_and_conquer_new(prefix, start, end):
+def divide_and_conquer_new(prefix, coins):
     global genuine_coin_new
     genuine_coin_new = None
     # call phase 1, phase 1 will call phase 2 if neccessary
-    fake_coin = divide_and_conquer_phase_1(prefix, start, end)
+    start = 0
+    end = len(coins)
+    fake_coin = divide_and_conquer_phase_1_new(prefix, start, end)
     # return fake coin    
     return fake_coin
 
 # phase one of the optimized algorithm
 def divide_and_conquer_phase_1_new(prefix, start, end):
     global genuine_coin_new
+    global weighings
     # base case, if only one coin left, it is the fake coin
     if((end - start) == 1):
         fake_coin = start
@@ -281,12 +301,28 @@ def divide_and_conquer_phase_1_new(prefix, start, end):
         # else if A > B then enter phase 2 with A being the heavy set of coins
         elif result == "left":
             if genuine_coin_new is None:
-                genuine_coin_new = offset_2
+                if(end - offset_2 == 0):
+                    special_case = (prefix[start + 1]) == (prefix[start + 2] - prefix[start + 1])
+                    weighings += 1
+                    if(special_case):
+                        genuine_coin_new = start
+                    else:
+                        genuine_coin_new = offset_1
+                else:    
+                    genuine_coin_new = offset_2
             fake_coin = divide_and_conquer_phase_2_new(prefix, B, A)
         # else if A < B then enter phase 2 with B being the heavy set of coins
         elif result == "right":
             if genuine_coin_new is None:
-                genuine_coin_new = offset_2
+                if(end - offset_2 == 0):
+                    special_case = (prefix[start + 1]) == (prefix[start + 2] - prefix[start + 1])
+                    weighings += 1
+                    if(special_case):
+                        genuine_coin_new = start
+                    else:
+                        genuine_coin_new = offset_1
+                else:    
+                    genuine_coin_new = offset_2
             fake_coin = divide_and_conquer_phase_2_new(prefix, A, B)
     # found the fake coin in phase 2
     return fake_coin
@@ -295,11 +331,13 @@ def divide_and_conquer_phase_1_new(prefix, start, end):
 def divide_and_conquer_phase_2_new(prefix, L, H):
     # base case, if light and heavy groups are only 1 coin each, then fake coin is either in L or H
     if (L[1] - L[0]) == 1 and (H[1] - H[0]) == 1:
-        result = scale_new(genuine_coin_new, L)
-        if result == "balanced":
-            fake_coin = H
-        elif result == "left":
-            fake_coin = L
+        global weighings
+        weighings +=1
+        result = ((prefix[genuine_coin_new + 1] - prefix[genuine_coin_new]) == (prefix[L[1]] - prefix[L[0]]))
+        if result == True:
+            fake_coin = H[0]
+        elif result == False:
+            fake_coin = L[0]
     # the fake coin either resides in the L group of coins or the H group of coins
     else:
         # divide the L group into 2 equal groups and a remainder group
@@ -312,18 +350,32 @@ def divide_and_conquer_phase_2_new(prefix, L, H):
         # divide the H group into 2 equal groups and a remainder group
         H_offset_1 = H[0] + m
         H_offset_2 = H[0] + 2 * m
-        H1 = (H[0], offset_1)
-        H2 = (offset_1, offset_2)
-        H3 = (offset_2, H[1])
+        H1 = (H[0], H_offset_1)
+        H2 = (H_offset_1, H_offset_2)
+        H3 = (H_offset_2, H[1])
         # weigh a combination of both groupings
-        result = scale(L1 + H1, L2 + H2)
+        result = scale_phase2_new(prefix, L1, H1, L2, H2)
         if result == "balanced":
-            fake_coin = divide_and_conquer_phase_2(L3, H3)
+            fake_coin = divide_and_conquer_phase_2_new(prefix, L3, H3)
         elif result == "left":
-            fake_coin = divide_and_conquer_phase_2(L2, H1)
+            fake_coin = divide_and_conquer_phase_2_new(prefix, L2, H1)
         elif result == "right":
-            fake_coin = divide_and_conquer_phase_2(L1, H2)
+            fake_coin = divide_and_conquer_phase_2_new(prefix, L1, H2)
     return fake_coin
+
+# new scale method for phase 2
+def scale_phase2_new(prefix, L1, H1, L2, H2):
+    global weighings
+    weighings += 1
+    left_pan = (prefix[L1[1]] - prefix[L1[0]]) + (prefix[H1[1]] - prefix[H1[0]])
+    right_pan = (prefix[L2[1]] - prefix[L2[0]]) + (prefix[H2[1]] - prefix[H2[0]])
+    
+    if left_pan > right_pan:
+        return "left"
+    elif left_pan < right_pan:
+        return "right"
+    else:
+        return "balanced"
 
 ######################################################################################################################################################
 ######################################################################################################################################################
