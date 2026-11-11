@@ -338,7 +338,6 @@ def divide_and_conquer_phase_2_new(prefix, L, H):
             fake_coin = H[0]
         elif result == False:
             fake_coin = L[0]
-    # the fake coin either resides in the L group of coins or the H group of coins
     else:
         # divide the L group into 2 equal groups and a remainder group
         m = math.ceil((L[1] - L[0])/3)
@@ -377,16 +376,91 @@ def scale_phase2_new(prefix, L1, H1, L2, H2):
     else:
         return "balanced"
 
+
+def print_results_new(prefix, fake_coin, time):
+    fake_coin_weight = prefix[fake_coin + 1] - prefix[fake_coin]
+    if fake_coin_weight < 2:
+        print(f"Fake coin found in {time}ns! Coin weighs {fake_coin_weight} gram. Took {weighings} weighs.")
+    else:
+        print(f"Fake coin found in {time}ns! Coin weighs {fake_coin_weight} grams. Took {weighings} weighs.")
+    return
+
+def stopwatch_new(prefix, algorithm, coins):
+    start = time.perf_counter_ns()
+    result = algorithm(prefix, coins)
+    elapsed = time.perf_counter_ns() - start
+    return result, elapsed
+
+def simulation_new(count):
+    # variables
+    increment_by = 2048
+    global weighings
+    # start the similation for brute force
+    # run the simulation 5 times at N coins, record time
+    # increment N by 2048 ten times, run simualtion 5 times at each iteration, record time at each iteration
+    print("\nEXECUTING BRUTE FORCE ALGORITHM...\n")
+    for i in range(10):
+        # increment number of coins for the next pile
+        number_of_coins = count + increment_by * i
+        print(f"Pile {i + 1} with {number_of_coins} coins had a result of: ")
+        for j in range(5):
+            # reset the weigh counter so each pile is counted independently
+            weighings = 0
+            prefix, coin_pile = initialize_coins_new(number_of_coins)
+            result, time = stopwatch_new(prefix, brute_force_new, coin_pile)
+            print_results_new(prefix, result, time)
+
+    # repeat above process for divide and conquer
+    print("\nEXECUTING DIVIDE AND CONQUER ALGORITHM...\n")
+    for i in range(10):
+        # increment number of coins for the next pile
+        number_of_coins = count + increment_by * i
+        print(f"Pile {i + 1} with {number_of_coins} coins had a result of: ")
+        for j in range(5):
+            # reset the weigh counter so each pile is counted independently
+            weighings = 0
+            prefix, coin_pile = initialize_coins_new(number_of_coins)
+            result, time = stopwatch_new(prefix, divide_and_conquer_new, coin_pile)        
+            print_results_new(prefix, result, time)
+    return
+
+def brute_force_new(prefix, coins):
+    global genuine_coin_new
+    genuine_coin_new = None
+    number_of_coins = len(coins)
+    for i in range(0, number_of_coins, 2):
+        left_coin = (i, i + 1)
+        right_coin = (i + 1, i + 2)
+        result = scale_new(prefix, left_coin, right_coin)
+        if(result == "balanced"):
+            if(genuine_coin_new == None):
+                genuine_coin_new = left_coin
+            if(i + 2 >= number_of_coins - 1):
+                fake_coin = right_coin[1]
+                break
+        else:
+            if(i == 0):
+                genuine_coin_new = (right_coin[0] + 1, right_coin[1] + 1)
+            result = scale_new(prefix, genuine_coin_new, left_coin)
+            if(result == "balanced"):
+                fake_coin = right_coin[0]
+                break
+            else:
+                fake_coin = left_coin[0]
+                break
+
+    return fake_coin
+
 ######################################################################################################################################################
 ######################################################################################################################################################
 
 # main executable function
 def main():
+    N = get_user_input()
     # program using old functions O(n) ceiling on D&C because of inefficient old scale method
-    simulation(get_user_input())
-
+    simulation(N)
     # program using new functions to acheive O(log_3(n)) on D&C
-    # simulation_new(get_user_input())
+    simulation_new(N)
 
 # control mechanism to execute main
 if __name__ == "__main__":
