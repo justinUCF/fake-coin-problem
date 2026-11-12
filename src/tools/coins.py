@@ -4,8 +4,8 @@
 # imports
 import random
 
-# this function intializes a pile of N coins with one fake coin (either light or heavy). It also precomputes an array of summed weights of contiguous coins
-def initialize_coins_new(N):
+# this function intializes a pile of N coins with one fake coin (either light or heavy). It also precomputes an array of summed weights of contiguous coins named prefix (used throughout the program)
+def initialize_coins(N):
     # fill an integer array that represents coins, 2 is the default weight of a genuine coin
     coins = [2] * N
     # randomly select an index within the array to place a fake coin with a weight of either 1 (light) or 3 (heavy)
