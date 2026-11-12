@@ -1,5 +1,6 @@
 # The Fake Coin Problem
 **Authors:** Giorgio Miguel Torregrosa and Justin Gamboa
+
 **Course:** COT5405 - Design and Analysis of Algorithms
 
 ## Overview
